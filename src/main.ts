@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
-import {wait} from './wait';
 import * as github from '@actions/github';
+
 import {getChangedFiles} from './utils';
 
 async function run(): Promise<void> {
@@ -42,6 +42,10 @@ async function run(): Promise<void> {
       options.reportOnlyChangedFiles = false;
     }
   }
+
+  finalHtml += '';
+
+  core.info(finalHtml);
 }
 
 run();

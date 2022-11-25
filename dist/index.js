@@ -71,6 +71,8 @@ function run() {
                 options.reportOnlyChangedFiles = false;
             }
         }
+        finalHtml += '';
+        core.info(finalHtml);
     });
 }
 run();
@@ -113,9 +115,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getContent = exports.getContentFile = exports.getPathToFile = exports.getChangedFiles = void 0;
+const fs = __importStar(__nccwpck_require__(5747));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const fs = __importStar(__nccwpck_require__(5747));
 const FILE_STATUSES = Object.freeze({
     ADDED: 'added',
     MODIFIED: 'modified',
@@ -132,7 +134,8 @@ function getChangedFiles(options) {
             const { repo, owner } = context.repo;
             const octokit = github.getOctokit(options.token);
             // Define the base and head commits to be extracted from the payload
-            let base, head;
+            let base = '';
+            let head = '';
             switch (eventName) {
                 case 'pull_request':
                     base = (_a = payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.sha;
@@ -176,7 +179,12 @@ function getChangedFiles(options) {
             }
             // Get the changed files from the response payload.
             const files = response.data.files;
-            const all = [], added = [], modified = [], removed = [], renamed = [], addedModified = [];
+            const all = [];
+            const added = [];
+            const modified = [];
+            const removed = [];
+            const renamed = [];
+            const addedModified = [];
             if (files) {
                 for (const file of files) {
                     const { filename: filenameOriginal, status } = file;
@@ -211,7 +219,7 @@ function getChangedFiles(options) {
             core.info(`Added or modified: ${addedModified.join(', ')}`);
             core.endGroup();
             return {
-                all: all,
+                all,
                 [FILE_STATUSES.ADDED]: added,
                 [FILE_STATUSES.MODIFIED]: modified,
                 [FILE_STATUSES.REMOVED]: removed,

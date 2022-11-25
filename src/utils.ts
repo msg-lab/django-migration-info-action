@@ -1,6 +1,7 @@
+import * as fs from 'fs';
+
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import * as fs from 'fs';
 
 const FILE_STATUSES = Object.freeze({
   ADDED: 'added',
@@ -18,7 +19,8 @@ export async function getChangedFiles(options: {[key: string]: string}) {
     const octokit = github.getOctokit(options.token);
 
     // Define the base and head commits to be extracted from the payload
-    let base, head;
+    let base = '';
+    let head = '';
 
     switch (eventName) {
       case 'pull_request':
@@ -68,12 +70,12 @@ export async function getChangedFiles(options: {[key: string]: string}) {
 
     // Get the changed files from the response payload.
     const files = response.data.files;
-    const all = [],
-      added = [],
-      modified = [],
-      removed = [],
-      renamed = [],
-      addedModified = [];
+    const all = [];
+    const added = [];
+    const modified = [];
+    const removed = [];
+    const renamed = [];
+    const addedModified = [];
 
     if (files) {
       for (const file of files) {
@@ -114,7 +116,7 @@ export async function getChangedFiles(options: {[key: string]: string}) {
     core.endGroup();
 
     return {
-      all: all,
+      all,
       [FILE_STATUSES.ADDED]: added,
       [FILE_STATUSES.MODIFIED]: modified,
       [FILE_STATUSES.REMOVED]: removed,
