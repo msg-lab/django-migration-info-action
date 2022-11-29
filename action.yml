@@ -8,13 +8,13 @@ inputs:
     required: true
   report-only-changed-files:
     required: false
-    default: false
+    default: 'false'
   source-file:
     required: false
-    default: migration_validation_result.json
+    default: 'migration_validation_result.json'
   create-new-comment:
     required: false
-    default: false
+    default: 'false'
 runs:
   using: 'node16'
   main: 'dist/index.js'
