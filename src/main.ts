@@ -1,7 +1,8 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
-import {getChangedFiles, getContent} from './utils';
+import {MigrationStatusObject} from './models';
+import {filterMigrations, getChangedFiles, getContent} from './utils';
 
 async function run(): Promise<void> {
   const token = core.getInput('github-token', {required: true});
@@ -45,10 +46,21 @@ async function run(): Promise<void> {
     }
   }
 
-  const content = getContent(sourceFilePath);
-  if (content) {
+  let content = getContent(sourceFilePath);
+  if (content !== null) {
     core.info(content);
+    content = JSON.parse(content);
+  } else {
+    /// Exit if there are no modified files
+    return;
   }
+
+  const interestedMigrations = filterMigrations(
+    options.changedFiles.all,
+    content as unknown as MigrationStatusObject,
+  );
+
+  core.info(JSON.stringify(interestedMigrations));
 
   finalHtml += '';
 

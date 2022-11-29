@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
+import {MigrationStatusObject, MigrationStatusObjectReturn} from './models';
+
 const FILE_STATUSES = Object.freeze({
   ADDED: 'added',
   MODIFIED: 'modified',
@@ -178,4 +180,73 @@ export function getContent(filePath: string) {
   }
 
   return null;
+}
+
+export function filterMigrations(
+  changedFiles: string[],
+  migrations: MigrationStatusObject,
+): MigrationStatusObjectReturn {
+  const interestingChangedFiles: {[key: string]: any[]} = {};
+  for (const changedFile of changedFiles) {
+    const splitted = changedFile.split('/');
+    /**
+     * We assume for now that all migrations will be in app/migrations/xx.py
+     * Hence length == 3
+     * */
+
+    if (splitted.length === 3 && splitted[1] === 'migrations') {
+      const migrationName = splitted[2].replace(/\.py/, '');
+
+      if (interestingChangedFiles[splitted[0]] === undefined) {
+        interestingChangedFiles[splitted[0]] = [migrationName];
+      } else {
+        interestingChangedFiles[splitted[0]].push([migrationName]);
+      }
+    }
+  }
+
+  /**
+   * Caught stuff here will only be of RunPython or RunSQL migration type.
+   *
+   * Errors:-
+   * Migrations that only have one of forwards and backwards migration defined.
+   *
+   * Warnings:-
+   * Migrations that have both forward and backward migration, but use
+   * RunPython.noop or RunSQL.noop
+   */
+
+  const errorsAndWarnings: MigrationStatusObjectReturn = {
+    errors: [],
+    warnings: [],
+    forwardDowntimes: [],
+    backwardDowntimes: [],
+  };
+
+  for (const keyword of [
+    'errors',
+    'warnings',
+    'forwardDowntimes',
+    'backwardDowntimes',
+  ] as (keyof MigrationStatusObjectReturn)[]) {
+    for (const app in interestingChangedFiles) {
+      const appMigrations = interestingChangedFiles[app];
+
+      if (Object.keys(migrations[keyword]).includes(app)) {
+        for (const migration of appMigrations) {
+          const culprits: any = migrations[keyword][app][migration];
+
+          if (culprits) {
+            errorsAndWarnings[keyword].push({
+              app,
+              migration,
+              culprits,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return errorsAndWarnings;
 }

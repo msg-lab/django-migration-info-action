@@ -73,10 +73,17 @@ function run() {
                 options.reportOnlyChangedFiles = false;
             }
         }
-        const content = (0, utils_1.getContent)(sourceFilePath);
-        if (content) {
+        let content = (0, utils_1.getContent)(sourceFilePath);
+        if (content !== null) {
             core.info(content);
+            content = JSON.parse(content);
         }
+        else {
+            /// Exit if there are no modified files
+            return;
+        }
+        const interestedMigrations = (0, utils_1.filterMigrations)(options.changedFiles.all, content);
+        core.info(JSON.stringify(interestedMigrations));
         finalHtml += '';
         core.info(finalHtml);
     });
@@ -120,7 +127,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getContent = exports.getContentFile = exports.getPathToFile = exports.getChangedFiles = void 0;
+exports.filterMigrations = exports.getContent = exports.getContentFile = exports.getPathToFile = exports.getChangedFiles = void 0;
 const fs = __importStar(__nccwpck_require__(5747));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
@@ -282,6 +289,65 @@ function getContent(filePath) {
     return null;
 }
 exports.getContent = getContent;
+function filterMigrations(changedFiles, migrations) {
+    const interestingChangedFiles = {};
+    for (const changedFile of changedFiles) {
+        const splitted = changedFile.split('/');
+        /**
+         * We assume for now that all migrations will be in app/migrations/xx.py
+         * Hence length == 3
+         * */
+        if (splitted.length === 3 && splitted[1] === 'migrations') {
+            const migrationName = splitted[2].replace(/\.py/, '');
+            if (interestingChangedFiles[splitted[0]] === undefined) {
+                interestingChangedFiles[splitted[0]] = [migrationName];
+            }
+            else {
+                interestingChangedFiles[splitted[0]].push([migrationName]);
+            }
+        }
+    }
+    /**
+     * Caught stuff here will only be of RunPython or RunSQL migration type.
+     *
+     * Errors:-
+     * Migrations that only have one of forwards and backwards migration defined.
+     *
+     * Warnings:-
+     * Migrations that have both forward and backward migration, but use
+     * RunPython.noop or RunSQL.noop
+     */
+    const errorsAndWarnings = {
+        errors: [],
+        warnings: [],
+        forwardDowntimes: [],
+        backwardDowntimes: [],
+    };
+    for (const keyword of [
+        'errors',
+        'warnings',
+        'forwardDowntimes',
+        'backwardDowntimes',
+    ]) {
+        for (const app in interestingChangedFiles) {
+            const appMigrations = interestingChangedFiles[app];
+            if (Object.keys(migrations[keyword]).includes(app)) {
+                for (const migration of appMigrations) {
+                    const culprits = migrations[keyword][app][migration];
+                    if (culprits) {
+                        errorsAndWarnings[keyword].push({
+                            app,
+                            migration,
+                            culprits,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    return errorsAndWarnings;
+}
+exports.filterMigrations = filterMigrations;
 
 
 /***/ }),
