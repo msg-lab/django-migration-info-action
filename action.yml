@@ -2,9 +2,16 @@ name: 'Your name here'
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
+  github-token:
+    description: 'GitHub API Access Token'
+    default: ${{ github.token }}
+    required: true
   report-only-changed-files:
     required: false
     default: false
+  source-file:
+    required: false
+    default: migration_validation_result.json
   create-new-comment:
     required: false
     default: false

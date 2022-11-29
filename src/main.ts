@@ -1,16 +1,14 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
-import {getChangedFiles} from './utils';
+import {getChangedFiles, getContent} from './utils';
 
 async function run(): Promise<void> {
   const reportOnlyChangedFiles = core.getBooleanInput(
     'report-only-changed-files',
-    {required: false},
   );
-  const createNewComment = core.getBooleanInput('create-new-comment', {
-    required: false,
-  });
+  const createNewComment = core.getBooleanInput('create-new-comment');
+  const sourceFilePath = core.getInput('source-file');
   const {context} = github;
   const {repo, owner} = context.repo;
   const {eventName, payload} = context;
@@ -37,10 +35,17 @@ async function run(): Promise<void> {
     const changedFiles = await getChangedFiles(options);
     options.changedFiles = changedFiles;
 
+    core.info(`changedFiles: ${changedFiles}`);
+
     // when github event come different from `pull_request` or `push`
     if (!changedFiles) {
       options.reportOnlyChangedFiles = false;
     }
+  }
+
+  const content = getContent(sourceFilePath);
+  if (content) {
+    core.info(content);
   }
 
   finalHtml += '';

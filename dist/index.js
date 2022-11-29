@@ -40,10 +40,9 @@ const github = __importStar(__nccwpck_require__(5438));
 const utils_1 = __nccwpck_require__(918);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const reportOnlyChangedFiles = core.getBooleanInput('report-only-changed-files', { required: false });
-        const createNewComment = core.getBooleanInput('create-new-comment', {
-            required: false,
-        });
+        const reportOnlyChangedFiles = core.getBooleanInput('report-only-changed-files');
+        const createNewComment = core.getBooleanInput('create-new-comment');
+        const sourceFilePath = core.getInput('source-file');
         const { context } = github;
         const { repo, owner } = context.repo;
         const { eventName, payload } = context;
@@ -66,10 +65,15 @@ function run() {
         if (options.reportOnlyChangedFiles) {
             const changedFiles = yield (0, utils_1.getChangedFiles)(options);
             options.changedFiles = changedFiles;
+            core.info(`changedFiles: ${changedFiles}`);
             // when github event come different from `pull_request` or `push`
             if (!changedFiles) {
                 options.reportOnlyChangedFiles = false;
             }
+        }
+        const content = (0, utils_1.getContent)(sourceFilePath);
+        if (content) {
+            core.info(content);
         }
         finalHtml += '';
         core.info(finalHtml);
