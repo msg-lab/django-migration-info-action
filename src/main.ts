@@ -4,6 +4,7 @@ import * as github from '@actions/github';
 import {getChangedFiles, getContent} from './utils';
 
 async function run(): Promise<void> {
+  const token = core.getInput('github-token', {required: true});
   const reportOnlyChangedFiles = core.getBooleanInput(
     'report-only-changed-files',
   );
@@ -16,6 +17,7 @@ async function run(): Promise<void> {
   let finalHtml = '';
 
   const options: {[key: string]: any} = {
+    token,
     repository: `${owner}/${repo}`,
     prefix: `${process.env.GITHUB_WORKSPACE}/`,
     createNewComment,

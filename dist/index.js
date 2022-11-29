@@ -40,6 +40,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const utils_1 = __nccwpck_require__(918);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        const token = core.getInput('github-token', { required: true });
         const reportOnlyChangedFiles = core.getBooleanInput('report-only-changed-files');
         const createNewComment = core.getBooleanInput('create-new-comment');
         const sourceFilePath = core.getInput('source-file');
@@ -48,6 +49,7 @@ function run() {
         const { eventName, payload } = context;
         let finalHtml = '';
         const options = {
+            token,
             repository: `${owner}/${repo}`,
             prefix: `${process.env.GITHUB_WORKSPACE}/`,
             createNewComment,
